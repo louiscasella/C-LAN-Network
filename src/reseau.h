@@ -55,7 +55,7 @@ typedef enum {
 
 typedef struct {
     TypeEquipement type;
-    union {
+    union { // tagged union (variante, peut prendre plusieurs valeurs)
         Station station;
         Switch  sw;
     } equipement;
