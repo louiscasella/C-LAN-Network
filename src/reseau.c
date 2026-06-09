@@ -151,3 +151,43 @@ int table_rechercher(TableCommutation *t, AdresseMAC mac) {
     }
     return -1;
 }
+
+// ─────────────────────────────────────────────
+//  Utilitaires de navigation dans le graphe
+// ─────────────────────────────────────────────
+
+/* On numérote les ports d'un switch dans l'ordre où ses liens
+   apparaissent dans le tableau r->liens[].
+   Exemple : si sw0 apparaît dans les liens 0, 2, 5 → ports 0, 1, 2 */
+
+int get_port(Reseau *r, int sw_idx, int neighbor_idx) {
+    int port = 0;
+    for (int i = 0; i < r->nb_liens; i++) {
+        int src = r->liens[i].source;
+        int dst = r->liens[i].destination;
+
+        /* Ce lien concerne-t-il sw_idx ? */
+        if (src == sw_idx || dst == sw_idx) {
+            /* Qui est l'autre bout ? */
+            int voisin = (src == sw_idx) ? dst : src;
+            if (voisin == neighbor_idx) return port;
+            port++;
+        }
+    }
+    return -1; /* Lien introuvable */
+}
+
+int get_voisin(Reseau *r, int sw_idx, int port) {
+    int p = 0;
+    for (int i = 0; i < r->nb_liens; i++) {
+        int src = r->liens[i].source;
+        int dst = r->liens[i].destination;
+
+        if (src == sw_idx || dst == sw_idx) {
+            if (p == port)
+                return (src == sw_idx) ? dst : src;
+            p++;
+        }
+    }
+    return -1; /* Port introuvable */
+}

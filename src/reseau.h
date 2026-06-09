@@ -114,3 +114,14 @@ int  mac_egales(AdresseMAC a, AdresseMAC b);
 // ─────────────────────────────────────────────
 
 Reseau charger_reseau(const char *chemin);
+
+// ─────────────────────────────────────────────
+//  Utilitaires de navigation dans le graphe
+// ─────────────────────────────────────────────
+
+/* Retourne le numéro de port du lien entre sw_idx et neighbor_idx.
+   Les ports sont numérotés dans l'ordre d'apparition des liens. */
+int get_port(Reseau *r, int sw_idx, int neighbor_idx);
+
+/* Retourne l'indice du voisin connecté au port donné d'un switch. */
+int get_voisin(Reseau *r, int sw_idx, int port);
