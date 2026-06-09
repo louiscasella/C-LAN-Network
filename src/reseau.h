@@ -55,7 +55,7 @@ typedef enum {
 
 typedef struct {
     TypeEquipement type;
-    union { // tagged union (variante, peut prendre plusieurs valeurs)
+    union {
         Station station;
         Switch  sw;
     } equipement;
@@ -108,3 +108,9 @@ void table_vider(TableCommutation *t);
 int  mac_egales(AdresseMAC a, AdresseMAC b);
 
 #endif /* RESEAU_H */
+
+// ─────────────────────────────────────────────
+//  Lecture fichier de configuration
+// ─────────────────────────────────────────────
+
+Reseau charger_reseau(const char *chemin);
