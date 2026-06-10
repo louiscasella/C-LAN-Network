@@ -13,7 +13,7 @@ make
 ./simulateur
 ```
 
-Les fichiers `.lan` doivent se trouvent dans le fichier lan.
+Les fichiers `.lan` se trouvent dans le fichier lan.
 
 ---
 
