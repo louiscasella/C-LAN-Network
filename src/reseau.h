@@ -1,25 +1,21 @@
 #ifndef RESEAU_H
 #define RESEAU_H
 
-#include <stdint.h>  /* pour uint8_t, uint16_t, etc. */
+#include <stdint.h>
 
 /* =========================================================
    ADRESSES
    ========================================================= */
-
-/* Adresse MAC : 6 octets (ex: AA:BB:CC:DD:EE:FF) */
 typedef struct {
     uint8_t octets[6];
 } AdresseMAC;
 
-/* Adresse IPv4 : 4 octets (ex: 130.79.80.21) */
 typedef struct {
     uint8_t octets[4];
 } AdresseIP;
 
 /* =========================================================
    STATION
-   Un ordinateur simple connecté au réseau.
    ========================================================= */
 typedef struct {
     AdresseMAC mac;
@@ -27,11 +23,8 @@ typedef struct {
 } Station;
 
 /* =========================================================
-   TABLE DE COMMUTATION D'UN SWITCH
-   Le switch apprend sur quel port se trouve chaque adresse MAC.
-   On stocke ça dans un tableau de lignes (mac -> numéro de port).
+   TABLE DE COMMUTATION
    ========================================================= */
-
 #define MAX_ENTREES_TABLE 64
 
 typedef struct {
@@ -45,17 +38,39 @@ typedef struct {
 } TableCommutation;
 
 /* =========================================================
+   ETATS STP D'UN PORT
+   ========================================================= */
+typedef enum {
+    PORT_INCONNU,   /* etat initial                            */
+    PORT_RACINE,    /* chemin le plus court vers la racine     */
+    PORT_DESIGNE,   /* port ouvert, transmet les trames        */
+    PORT_BLOQUE     /* port ferme par STP pour casser un cycle */
+} EtatPort;
+
+typedef struct {
+    EtatPort etat;
+} PortSTP;
+
+/* =========================================================
    SWITCH
    ========================================================= */
+#define MAX_PORTS 16
+
 typedef struct {
     AdresseMAC       mac;
     int              nb_ports;
     int              priorite;
     TableCommutation table;
+
+    /* Infos STP */
+    AdresseMAC racine_mac;       /* MAC de la racine connue          */
+    int        racine_priorite;  /* priorite de la racine connue     */
+    int        cout_racine;      /* cout de ce switch vers la racine */
+    PortSTP    ports[MAX_PORTS]; /* etat de chaque port              */
 } Switch;
 
 /* =========================================================
-   TYPE D'EQUIPEMENT
+   RESEAU
    ========================================================= */
 typedef enum {
     TYPE_STATION = 1,
@@ -70,18 +85,11 @@ typedef struct {
     } equipement;
 } Noeud;
 
-/* =========================================================
-   LIEN
-   ========================================================= */
 typedef struct {
     int noeud1;
     int noeud2;
     int poids;
 } Lien;
-
-/* =========================================================
-   RESEAU LOCAL
-   ========================================================= */
 
 #define MAX_NOEUDS 32
 #define MAX_LIENS  64
@@ -103,6 +111,7 @@ void afficher_station(Station *st);
 void afficher_switch(Switch *sw);
 void afficher_reseau(Reseau *r);
 void afficher_table(TableCommutation *table);
+void afficher_stp_reseau(Reseau *r);
 
 AdresseMAC creer_mac(uint8_t a, uint8_t b, uint8_t c,
                      uint8_t d, uint8_t e, uint8_t f);

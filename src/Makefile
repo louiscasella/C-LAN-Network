@@ -2,7 +2,7 @@ CC     = gcc
 CFLAGS = -Wall -Wextra
 
 TARGET = simulateur
-SRCS   = main.c reseau.c config.c trame.c simulateur.c
+SRCS   = main.c reseau.c config.c trame.c simulateur.c stp.c
 OBJS   = $(SRCS:.c=.o)
 
 $(TARGET): $(OBJS)
