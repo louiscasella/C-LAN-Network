@@ -5,10 +5,6 @@
 #include "simulateur.h"
 #include "stp.h"
 
-/*
- * Les FileEvenements sont declarees static pour eviter le
- * stack overflow : une FileEvenements fait ~775 Ko sur la pile.
- */
 
 /* =========================================================
    SCENARIO 0 : affiche le contenu d'un fichier de config .lan
