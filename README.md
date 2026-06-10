@@ -2,7 +2,7 @@
 
 **IUT Robert Schuman — Département Informatique**
 
-Projet réalisé par [Louis CASELLA](https://github.com/louiscasella) [Léo GALIEN](https://github.com/Leo-Galien) . Ce simulateur modélise un réseau local Ethernet avec commutation de trames et protocole STP, à l'aide d'un ordonnanceur à événements discrets.
+Projet réalisé par [Louis CASELLA](https://github.com/louiscasella) et [Léo GALIEN](https://github.com/Leo-Galien) . Ce simulateur modélise un réseau local Ethernet avec commutation de trames et protocole STP, à l'aide d'un ordonnanceur à événements discrets.
 
 ---
 
