@@ -2,7 +2,7 @@
 
 **IUT Robert Schuman — Département Informatique**
 
-Projet réalisé en binôme. Ce simulateur modélise un réseau local Ethernet avec commutation de trames et protocole STP, à l'aide d'un ordonnanceur à événements discrets.
+Projet réalisé avec @Leo-Galien . Ce simulateur modélise un réseau local Ethernet avec commutation de trames et protocole STP, à l'aide d'un ordonnanceur à événements discrets.
 
 ---
 
