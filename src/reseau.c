@@ -1,193 +1,154 @@
 #include <stdio.h>
-#include <string.h>
 #include "reseau.h"
 
-// ─────────────────────────────────────────────
-//  Constructeurs
-// ─────────────────────────────────────────────
+/* =========================================================
+   FONCTIONS DE CREATION
+   ========================================================= */
 
 AdresseMAC creer_mac(uint8_t a, uint8_t b, uint8_t c,
-                     uint8_t d, uint8_t e, uint8_t f) {
+                     uint8_t d, uint8_t e, uint8_t f)
+{
     AdresseMAC mac;
     mac.octets[0] = a; mac.octets[1] = b; mac.octets[2] = c;
     mac.octets[3] = d; mac.octets[4] = e; mac.octets[5] = f;
     return mac;
 }
 
-/* Les octets sont stockés du poids fort au poids faible :
-   creer_ip(130, 79, 80, 21) -> 0x824F5015              */
-AdresseIP creer_ip(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
-    return ((uint32_t)a << 24) | ((uint32_t)b << 16)
-         | ((uint32_t)c <<  8) |  (uint32_t)d;
+AdresseIP creer_ip(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+{
+    AdresseIP ip;
+    ip.octets[0] = a; ip.octets[1] = b;
+    ip.octets[2] = c; ip.octets[3] = d;
+    return ip;
 }
 
-Station creer_station(AdresseMAC mac, AdresseIP ip) {
-    Station s;
-    s.mac = mac;
-    s.ip  = ip;
-    return s;
+Station creer_station(AdresseMAC mac, AdresseIP ip)
+{
+    Station st;
+    st.mac = mac;
+    st.ip  = ip;
+    return st;
 }
 
-Switch creer_switch(AdresseMAC mac, int nb_ports, int priorite) {
+Switch creer_switch(AdresseMAC mac, int nb_ports, int priorite)
+{
     Switch sw;
     sw.mac      = mac;
     sw.nb_ports = nb_ports;
     sw.priorite = priorite;
-    table_vider(&sw.table);
+    sw.table.nb_entrees = 0;
     return sw;
 }
 
-// ─────────────────────────────────────────────
-//  Affichage
-// ─────────────────────────────────────────────
+Reseau creer_reseau_vide()
+{
+    Reseau r;
+    r.nb_noeuds = 0;
+    r.nb_liens  = 0;
+    return r;
+}
 
-void afficher_mac(AdresseMAC mac) {
-    printf("%02x:%02x:%02x:%02x:%02x:%02x",
+int ajouter_station(Reseau *r, Station st)
+{
+    int i = r->nb_noeuds;
+    r->noeuds[i].type         = TYPE_STATION;
+    r->noeuds[i].equipement.s = st;
+    r->nb_noeuds++;
+    return i;
+}
+
+int ajouter_switch(Reseau *r, Switch sw)
+{
+    int i = r->nb_noeuds;
+    r->noeuds[i].type          = TYPE_SWITCH;
+    r->noeuds[i].equipement.sw = sw;
+    r->nb_noeuds++;
+    return i;
+}
+
+void ajouter_lien(Reseau *r, int i, int j, int poids)
+{
+    int l = r->nb_liens;
+    r->liens[l].noeud1 = i;
+    r->liens[l].noeud2 = j;
+    r->liens[l].poids  = poids;
+    r->nb_liens++;
+}
+
+int mac_egales(AdresseMAC a, AdresseMAC b)
+{
+    int i;
+    for (i = 0; i < 6; i++)
+        if (a.octets[i] != b.octets[i]) return 0;
+    return 1;
+}
+
+/* =========================================================
+   FONCTIONS D'AFFICHAGE
+   ========================================================= */
+
+void afficher_mac(AdresseMAC mac)
+{
+    printf("%02X:%02X:%02X:%02X:%02X:%02X",
            mac.octets[0], mac.octets[1], mac.octets[2],
            mac.octets[3], mac.octets[4], mac.octets[5]);
 }
 
-/* Extraction des octets par décalage binaire */
-void afficher_ip(AdresseIP ip) {
+void afficher_ip(AdresseIP ip)
+{
     printf("%d.%d.%d.%d",
-           (ip >> 24) & 0xFF,
-           (ip >> 16) & 0xFF,
-           (ip >>  8) & 0xFF,
-            ip        & 0xFF);
+           ip.octets[0], ip.octets[1], ip.octets[2], ip.octets[3]);
 }
 
-void afficher_station(Station s) {
-    printf("Station {\n");
-    printf("  MAC : "); afficher_mac(s.mac); printf("\n");
-    printf("  IP  : "); afficher_ip(s.ip);   printf("\n");
-    printf("}\n");
-}
-
-void afficher_table_commutation(TableCommutation t) {
-    printf("  Table de commutation (%d entrée(s)) :\n", t.nb_entrees);
-    if (t.nb_entrees == 0) {
-        printf("    (vide)\n");
+void afficher_table(TableCommutation *table)
+{
+    int i;
+    if (table->nb_entrees == 0) {
+        printf("    (table vide)\n");
         return;
     }
-    printf("    %-20s | Port\n", "Adresse MAC");
-    printf("    ---------------------|------\n");
-    for (int i = 0; i < TAILLE_TABLE_MAX; i++) {
-        if (t.entrees[i].valide) {
-            printf("    ");
-            afficher_mac(t.entrees[i].mac);
-            printf(" | %d\n", t.entrees[i].port);
-        }
+    printf("    %-20s  Port\n", "Adresse MAC");
+    printf("    %-20s  ----\n", "-------------------");
+    for (i = 0; i < table->nb_entrees; i++) {
+        printf("    ");
+        afficher_mac(table->entrees[i].mac);
+        printf("  ->  %d\n", table->entrees[i].port);
     }
 }
 
-void afficher_switch(Switch sw) {
-    printf("Switch {\n");
-    printf("  MAC      : "); afficher_mac(sw.mac); printf("\n");
-    printf("  Ports    : %d\n", sw.nb_ports);
-    printf("  Priorité : %d\n", sw.priorite);
-    afficher_table_commutation(sw.table);
-    printf("}\n");
+void afficher_station(Station *st)
+{
+    printf("  MAC : "); afficher_mac(st->mac); printf("\n");
+    printf("  IP  : "); afficher_ip(st->ip);   printf("\n");
 }
 
-void afficher_reseau(Reseau r) {
-    printf("=== Réseau local (%d noeud(s), %d lien(s)) ===\n",
-           r.nb_noeuds, r.nb_liens);
-    for (int i = 0; i < r.nb_noeuds; i++) {
-        printf("[%d] ", i);
-        if (r.noeuds[i].type == TYPE_STATION)
-            afficher_station(r.noeuds[i].equipement.station);
-        else
-            afficher_switch(r.noeuds[i].equipement.sw);
+void afficher_switch(Switch *sw)
+{
+    printf("  MAC      : "); afficher_mac(sw->mac); printf("\n");
+    printf("  Ports    : %d\n", sw->nb_ports);
+    printf("  Priorite : %d\n", sw->priorite);
+    printf("  Table de commutation :\n");
+    afficher_table(&sw->table);
+}
+
+void afficher_reseau(Reseau *r)
+{
+    int i;
+    printf("=== RESEAU (%d equipements, %d liens) ===\n\n",
+           r->nb_noeuds, r->nb_liens);
+    for (i = 0; i < r->nb_noeuds; i++) {
+        Noeud *n = &r->noeuds[i];
+        if (n->type == TYPE_SWITCH) {
+            printf("[%d] SWITCH\n", i);
+            afficher_switch(&n->equipement.sw);
+        } else {
+            printf("[%d] STATION\n", i);
+            afficher_station(&n->equipement.s);
+        }
+        printf("\n");
     }
     printf("--- Liens ---\n");
-    for (int i = 0; i < r.nb_liens; i++) {
-        printf("  %d <--(%d)--> %d\n",
-               r.liens[i].source,
-               r.liens[i].poids,
-               r.liens[i].destination);
-    }
-}
-
-// ─────────────────────────────────────────────
-//  Table de commutation
-// ─────────────────────────────────────────────
-
-int mac_egales(AdresseMAC a, AdresseMAC b) {
-    return memcmp(a.octets, b.octets, 6) == 0;
-}
-
-void table_vider(TableCommutation *t) {
-    t->nb_entrees = 0;
-    for (int i = 0; i < TAILLE_TABLE_MAX; i++)
-        t->entrees[i].valide = 0;
-}
-
-void table_ajouter(TableCommutation *t, AdresseMAC mac, int port) {
-    /* Mise à jour si l'adresse existe déjà */
-    for (int i = 0; i < TAILLE_TABLE_MAX; i++) {
-        if (t->entrees[i].valide && mac_egales(t->entrees[i].mac, mac)) {
-            t->entrees[i].port = port;
-            return;
-        }
-    }
-    /* Sinon, cherche un slot libre */
-    for (int i = 0; i < TAILLE_TABLE_MAX; i++) {
-        if (!t->entrees[i].valide) {
-            t->entrees[i].mac    = mac;
-            t->entrees[i].port   = port;
-            t->entrees[i].valide = 1;
-            t->nb_entrees++;
-            return;
-        }
-    }
-    fprintf(stderr, "Erreur : table de commutation pleine\n");
-}
-
-/* Retourne le port associé à la MAC, ou -1 si inconnue */
-int table_rechercher(TableCommutation *t, AdresseMAC mac) {
-    for (int i = 0; i < TAILLE_TABLE_MAX; i++) {
-        if (t->entrees[i].valide && mac_egales(t->entrees[i].mac, mac))
-            return t->entrees[i].port;
-    }
-    return -1;
-}
-
-// ─────────────────────────────────────────────
-//  Utilitaires de navigation dans le graphe
-// ─────────────────────────────────────────────
-
-/* On numérote les ports d'un switch dans l'ordre où ses liens
-   apparaissent dans le tableau r->liens[].
-   Exemple : si sw0 apparaît dans les liens 0, 2, 5 → ports 0, 1, 2 */
-
-int get_port(Reseau *r, int sw_idx, int neighbor_idx) {
-    int port = 0;
-    for (int i = 0; i < r->nb_liens; i++) {
-        int src = r->liens[i].source;
-        int dst = r->liens[i].destination;
-
-        /* Ce lien concerne-t-il sw_idx ? */
-        if (src == sw_idx || dst == sw_idx) {
-            /* Qui est l'autre bout ? */
-            int voisin = (src == sw_idx) ? dst : src;
-            if (voisin == neighbor_idx) return port;
-            port++;
-        }
-    }
-    return -1; /* Lien introuvable */
-}
-
-int get_voisin(Reseau *r, int sw_idx, int port) {
-    int p = 0;
-    for (int i = 0; i < r->nb_liens; i++) {
-        int src = r->liens[i].source;
-        int dst = r->liens[i].destination;
-
-        if (src == sw_idx || dst == sw_idx) {
-            if (p == port)
-                return (src == sw_idx) ? dst : src;
-            p++;
-        }
-    }
-    return -1; /* Port introuvable */
+    for (i = 0; i < r->nb_liens; i++)
+        printf("  [%d] <--(poids %d)--> [%d]\n",
+               r->liens[i].noeud1, r->liens[i].poids, r->liens[i].noeud2);
 }

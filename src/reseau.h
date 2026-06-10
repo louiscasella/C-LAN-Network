@@ -1,46 +1,52 @@
 #ifndef RESEAU_H
 #define RESEAU_H
 
-#include <stdint.h>
+#include <stdint.h>  /* pour uint8_t, uint16_t, etc. */
 
-// ─────────────────────────────────────────────
-//  Types de base
-// ─────────────────────────────────────────────
+/* =========================================================
+   ADRESSES
+   ========================================================= */
 
-/* Adresse MAC : 6 octets dans une struct pour passage par valeur */
+/* Adresse MAC : 6 octets (ex: AA:BB:CC:DD:EE:FF) */
 typedef struct {
     uint8_t octets[6];
 } AdresseMAC;
 
-/* Adresse IPv4 : 1 entier 32 bits, octet de poids fort = premier octet */
-typedef uint32_t AdresseIP;
-
-// ─────────────────────────────────────────────
-//  Table de commutation d'un switch
-// ─────────────────────────────────────────────
-
-#define TAILLE_TABLE_MAX 256
-
+/* Adresse IPv4 : 4 octets (ex: 130.79.80.21) */
 typedef struct {
-    AdresseMAC mac;
-    int        port;
-    int        valide;
-} EntreeTable;
+    uint8_t octets[4];
+} AdresseIP;
 
-typedef struct {
-    EntreeTable entrees[TAILLE_TABLE_MAX];
-    int         nb_entrees;
-} TableCommutation;
-
-// ─────────────────────────────────────────────
-//  Équipements
-// ─────────────────────────────────────────────
-
+/* =========================================================
+   STATION
+   Un ordinateur simple connecté au réseau.
+   ========================================================= */
 typedef struct {
     AdresseMAC mac;
     AdresseIP  ip;
 } Station;
 
+/* =========================================================
+   TABLE DE COMMUTATION D'UN SWITCH
+   Le switch apprend sur quel port se trouve chaque adresse MAC.
+   On stocke ça dans un tableau de lignes (mac -> numéro de port).
+   ========================================================= */
+
+#define MAX_ENTREES_TABLE 64
+
+typedef struct {
+    AdresseMAC mac;
+    int        port;
+} EntreeTable;
+
+typedef struct {
+    EntreeTable entrees[MAX_ENTREES_TABLE];
+    int         nb_entrees;
+} TableCommutation;
+
+/* =========================================================
+   SWITCH
+   ========================================================= */
 typedef struct {
     AdresseMAC       mac;
     int              nb_ports;
@@ -48,80 +54,65 @@ typedef struct {
     TableCommutation table;
 } Switch;
 
+/* =========================================================
+   TYPE D'EQUIPEMENT
+   ========================================================= */
 typedef enum {
-    TYPE_SWITCH  = 2,
-    TYPE_STATION = 1
+    TYPE_STATION = 1,
+    TYPE_SWITCH  = 2
 } TypeEquipement;
 
 typedef struct {
     TypeEquipement type;
     union {
-        Station station;
+        Station s;
         Switch  sw;
     } equipement;
 } Noeud;
 
-// ─────────────────────────────────────────────
-//  Réseau local (graphe étiqueté)
-// ─────────────────────────────────────────────
-
-#define NB_NOEUDS_MAX 64
-
+/* =========================================================
+   LIEN
+   ========================================================= */
 typedef struct {
-    int source;
-    int destination;
+    int noeud1;
+    int noeud2;
     int poids;
 } Lien;
 
+/* =========================================================
+   RESEAU LOCAL
+   ========================================================= */
+
+#define MAX_NOEUDS 32
+#define MAX_LIENS  64
+
 typedef struct {
-    Noeud noeuds[NB_NOEUDS_MAX];
+    Noeud noeuds[MAX_NOEUDS];
     int   nb_noeuds;
-    Lien  liens[NB_NOEUDS_MAX * NB_NOEUDS_MAX];
+    Lien  liens[MAX_LIENS];
     int   nb_liens;
 } Reseau;
 
-// ─────────────────────────────────────────────
-//  Fonctions d'affichage
-// ─────────────────────────────────────────────
+/* =========================================================
+   PROTOTYPES
+   ========================================================= */
 
 void afficher_mac(AdresseMAC mac);
 void afficher_ip(AdresseIP ip);
-void afficher_station(Station s);
-void afficher_switch(Switch sw);
-void afficher_table_commutation(TableCommutation t);
-void afficher_reseau(Reseau r);
-
-// ─────────────────────────────────────────────
-//  Fonctions utilitaires
-// ─────────────────────────────────────────────
+void afficher_station(Station *st);
+void afficher_switch(Switch *sw);
+void afficher_reseau(Reseau *r);
+void afficher_table(TableCommutation *table);
 
 AdresseMAC creer_mac(uint8_t a, uint8_t b, uint8_t c,
                      uint8_t d, uint8_t e, uint8_t f);
 AdresseIP  creer_ip(uint8_t a, uint8_t b, uint8_t c, uint8_t d);
 Station    creer_station(AdresseMAC mac, AdresseIP ip);
 Switch     creer_switch(AdresseMAC mac, int nb_ports, int priorite);
-
-void table_ajouter(TableCommutation *t, AdresseMAC mac, int port);
-int  table_rechercher(TableCommutation *t, AdresseMAC mac);
-void table_vider(TableCommutation *t);
-
-int  mac_egales(AdresseMAC a, AdresseMAC b);
+Reseau     creer_reseau_vide();
+int        ajouter_station(Reseau *r, Station st);
+int        ajouter_switch(Reseau *r, Switch sw);
+void       ajouter_lien(Reseau *r, int i, int j, int poids);
+int        mac_egales(AdresseMAC a, AdresseMAC b);
 
 #endif /* RESEAU_H */
-
-// ─────────────────────────────────────────────
-//  Lecture fichier de configuration
-// ─────────────────────────────────────────────
-
-Reseau charger_reseau(const char *chemin);
-
-// ─────────────────────────────────────────────
-//  Utilitaires de navigation dans le graphe
-// ─────────────────────────────────────────────
-
-/* Retourne le numéro de port du lien entre sw_idx et neighbor_idx.
-   Les ports sont numérotés dans l'ordre d'apparition des liens. */
-int get_port(Reseau *r, int sw_idx, int neighbor_idx);
-
-/* Retourne l'indice du voisin connecté au port donné d'un switch. */
-int get_voisin(Reseau *r, int sw_idx, int port);

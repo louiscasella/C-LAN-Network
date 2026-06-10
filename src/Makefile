@@ -1,25 +1,19 @@
 CC     = gcc
 CFLAGS = -Wall -Wextra
 
-all: monprog
+TARGET = simulateur
+SRCS   = main.c reseau.c config.c trame.c simulateur.c
+OBJS   = $(SRCS:.c=.o)
 
-monprog: main.o reseau.o loader.o trame.o scheduler.o
-	$(CC) $(CFLAGS) -o monprog main.o reseau.o loader.o trame.o scheduler.o
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
-main.o: main.c reseau.h trame.h scheduler.h
-	$(CC) $(CFLAGS) -c main.c
-
-reseau.o: reseau.c reseau.h
-	$(CC) $(CFLAGS) -c reseau.c
-
-loader.o: loader.c reseau.h
-	$(CC) $(CFLAGS) -c loader.c
-
-trame.o: trame.c trame.h reseau.h
-	$(CC) $(CFLAGS) -c trame.c
-
-scheduler.o: scheduler.c scheduler.h reseau.h trame.h
-	$(CC) $(CFLAGS) -c scheduler.c
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o monprog
+	rm -f $(OBJS) $(TARGET)
+
+re: clean $(TARGET)
+
+.PHONY: clean re
