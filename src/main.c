@@ -33,7 +33,7 @@ void scenario_1()
     printf("║  SCENARIO 1 : diffusion puis unicast ║\n");
     printf("╚══════════════════════════════════════╝\n");
 
-    if (!charger_reseau("mylan_no_cycle.lan", &r)) return;
+    if (!charger_reseau("../lan/mylan_no_cycle.lan", &r)) return;
     init_file(&file);
 
     AdresseMAC mac_st0 = r.noeuds[7].equipement.s.mac;
@@ -60,7 +60,7 @@ void scenario_2()
     printf("║  SCENARIO 2 : deux envois simultanes ║\n");
     printf("╚══════════════════════════════════════╝\n");
 
-    if (!charger_reseau("my_better_lan.lan", &r)) return;
+    if (!charger_reseau("../lan/my_better_lan.lan", &r)) return;
     init_file(&file);
 
     AdresseMAC mac_st3 = r.noeuds[3].equipement.s.mac;
@@ -107,7 +107,7 @@ void scenario_4_tempete_broadcast()
     printf("║  (reseau avec cycles, sans STP)       ║\n");
     printf("╚══════════════════════════════════════╝\n\n");
 
-    if (!charger_reseau("mylan.lan", &r)) return;
+    if (!charger_reseau("../lan/mylan.lan", &r)) return;
     init_file(&file);
 
     AdresseMAC src       = r.noeuds[7].equipement.s.mac;
@@ -132,7 +132,7 @@ void scenario_5_stp()
     printf("║  SCENARIO 5 : CONVERGENCE STP        ║\n");
     printf("╚══════════════════════════════════════╝\n\n");
 
-    if (!charger_reseau("my_better_lan.lan", &r)) return;
+    if (!charger_reseau("../lan/my_better_lan.lan", &r)) return;
     init_file(&file);
 
     demarrer_stp(&r, &file);
